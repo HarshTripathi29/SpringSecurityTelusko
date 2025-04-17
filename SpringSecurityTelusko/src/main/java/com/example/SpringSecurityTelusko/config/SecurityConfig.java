@@ -1,38 +1,66 @@
 package com.example.SpringSecurityTelusko.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception{
+    @Autowired
+    private UserDetailsService userDetailsService; // Inject your custom DB-based service
 
+    /**
+     * This bean configures how authentication is handled.
+     * DaoAuthenticationProvider connects Spring Security to your DB-backed user details.
+     */
+    @Bean
+    public AuthenticationProvider authProvider() {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
 
+        // Link it to your custom UserDetailsService
+        provider.setUserDetailsService(userDetailsService);
 
-    // finalizes the configuration and creates the actual SecurityFilterChain
-    httpSecurity
-            // disabling csrf token, take an object of customizer and call disable()
-            .csrf(customizer->customizer.disable())
+        // Use plain text password encoder for testing (not for production!)
+        provider.setPasswordEncoder(NoOpPasswordEncoder.getInstance());
 
-            // authorize the request on these routes
-            .authorizeHttpRequests(request->request.anyRequest().authenticated())
+        return provider;
+    }
 
-            //  This enables basic HTTP authentication (you send Authorization: Basic base64(username:password) header).
-            .httpBasic(Customizer.withDefaults())
+    /**
+     * This bean configures HTTP security — how requests are authorized, what routes are protected, etc.
+     */
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
+        httpSecurity
+                // Disable CSRF since we are using stateless API (no session or cookies)
+                .csrf(csrf -> csrf.disable())
 
-            //  No server-side sessions are created or stored.Every request must carry its authentication
-            //  (i.e., token).Perfect for JWT-based microservices.
-            .sessionManagement(session->session
-                    .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+                // Route access control
+                .authorizeHttpRequests(request -> request
+                        .requestMatchers("/auth/**").permitAll() // Allow public access to /auth routes
+                        .anyRequest().authenticated()            // All other routes require login
+                )
 
-    // returns an object of security filter chain
-    return httpSecurity.build();
+                // Use HTTP Basic Auth (sends username:password in the header)
+                .httpBasic(Customizer.withDefaults())
 
-}
+                // Don't create or use sessions — each request must be authenticated
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                );
+
+        return httpSecurity.build(); // Return the configured filter chain
+    }
 }
