@@ -29,6 +29,6 @@ public class MyUserDetailsService implements UserDetailsService {
         }
         System.out.println("User found: " + user.getUsername());
         return new UserPrincipal(user);
-    }
+     }
 
 }

@@ -15,11 +15,16 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+
+    @Autowired
+    private JwtFilter jwtFilter;
 
     @Autowired
     private UserDetailsService userDetailsService; // Inject your custom DB-based service
@@ -69,8 +74,8 @@ public class SecurityConfig {
                 )
 
                 // This tells Spring Security to use the authProvider() bean you defined
-            .authenticationProvider(authProvider());
-
+            .authenticationProvider(authProvider())
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         // Take all the security settings I’ve configured and build the actual security filter chain
         // that Spring Security will use to protect the application.
         return httpSecurity.build();
