@@ -3,9 +3,11 @@ package com.example.SpringSecurityTelusko.config;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -51,7 +53,7 @@ public class SecurityConfig {
 
                 // Route access control
                 .authorizeHttpRequests(request -> request
-                        .requestMatchers("/auth/**").permitAll() // Allow public access to /auth routes
+                        .requestMatchers("register","login").permitAll() // Allow public access to /auth routes
                         .anyRequest().authenticated()            // All other routes require login
                 )
 
@@ -73,4 +75,10 @@ public class SecurityConfig {
         // that Spring Security will use to protect the application.
         return httpSecurity.build();
     }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception{
+        return config.getAuthenticationManager();
+    }
+
 }
