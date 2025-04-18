@@ -10,6 +10,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
@@ -25,6 +26,7 @@ public class SecurityConfig {
      * This bean configures how authentication is handled.
      * DaoAuthenticationProvider connects Spring Security to your DB-backed user details.
      */
+
     @Bean
     public AuthenticationProvider authProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
@@ -33,7 +35,7 @@ public class SecurityConfig {
         provider.setUserDetailsService(userDetailsService);
 
         // Use plain text password encoder for testing (not for production!)
-        provider.setPasswordEncoder(NoOpPasswordEncoder.getInstance());
+        provider.setPasswordEncoder(new BCryptPasswordEncoder(12));
 
         return provider;
     }
@@ -54,13 +56,21 @@ public class SecurityConfig {
                 )
 
                 // Use HTTP Basic Auth (sends username:password in the header)
+                // Enable Basic Auth using Spring Security’s default behavior. No custom tweaks needed.
                 .httpBasic(Customizer.withDefaults())
 
                 // Don't create or use sessions — each request must be authenticated
+                // stateless server
+
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                );
+                )
 
-        return httpSecurity.build(); // Return the configured filter chain
+                // This tells Spring Security to use the authProvider() bean you defined
+            .authenticationProvider(authProvider());
+
+        // Take all the security settings I’ve configured and build the actual security filter chain
+        // that Spring Security will use to protect the application.
+        return httpSecurity.build();
     }
 }

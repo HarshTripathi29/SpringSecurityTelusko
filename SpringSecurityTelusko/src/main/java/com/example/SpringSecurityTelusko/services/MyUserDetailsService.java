@@ -18,17 +18,17 @@ public class MyUserDetailsService implements UserDetailsService {
      * This method is automatically called by Spring Security during authentication.
      * It loads user data from the database using the provided username.
      */
+
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        // Look up the user in the database
+        System.out.println("Fetching user: " + username);
         User user = repo.findByUsername(username);
-
-        // If user not found, throw exception
         if (user == null) {
+            System.out.println("User not found in DB!");
             throw new UsernameNotFoundException("User not found");
         }
-
-        // Wrap the User entity in a Spring Security UserDetails implementation
+        System.out.println("User found: " + user.getUsername());
         return new UserPrincipal(user);
     }
+
 }
